@@ -1,0 +1,41 @@
+# Sistema Comedor - Aluminios del Uruguay S.A.
+#
+# Uso en el Ubuntu de destino:
+#   docker compose up -d --build   → build + arrancar
+#   docker compose logs -f          → logs en vivo
+#   docker compose restart          → reiniciar
+#   docker compose down             → detener (los volúmenes con datos NO se borran)
+#
+# La aplicación queda disponible en:  http://<ip-servidor>:11546
+#   Kiosko (público):    http://<ip-servidor>:11546/
+#   Panel admin:         http://<ip-servidor>:11546/admin
+
+services:
+  comedor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: comedor:latest
+    container_name: comedor
+    restart: unless-stopped
+
+    ports:
+      - "11546:8000"
+
+    env_file:
+      - backend/.env
+
+    volumes:
+      # Bind mounts: el contenedor usa los archivos reales del host.
+      # En Ubuntu, deben ser escribibles por UID 1000 (appuser):
+      #   sudo chown -R 1000:1000 backend/data backend/backups backend/logs
+      - ./backend/data:/app/backend/data
+      - ./backend/backups:/app/backend/backups
+      - ./backend/logs:/app/backend/logs
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/health', timeout=3).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3

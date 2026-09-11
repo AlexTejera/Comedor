@@ -1,0 +1,18 @@
+# Sistema Comedor - Aluminios del Uruguay
+# Backend dependencies
+# Nota: pyodbc 5.1.0 requiere Python <= 3.12 para compilar correctamente.
+#       El Dockerfile usa python:3.12-slim-bookworm.
+
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+sqlalchemy==2.0.35
+alembic==1.14.0
+pydantic[email]==2.9.2
+pydantic-settings==2.5.2
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.1
+python-multipart==0.0.12
+pyodbc==5.1.0
+pytz==2024.2
+aiofiles==24.1.0

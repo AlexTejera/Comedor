@@ -1,0 +1,10 @@
+# Normalizar line endings: LF en el repo, conversión automática en Windows
+* text=auto eol=lf
+
+# Binarios — sin conversión
+*.db    binary
+*.png   binary
+*.jpg   binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary

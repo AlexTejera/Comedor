@@ -1,0 +1,32 @@
+# Control de versiones
+.git
+.gitignore
+
+# Dependencias locales (se instalan en la imagen)
+node_modules
+frontend/node_modules
+
+# Builds previos (se regeneran en la imagen)
+frontend/dist
+
+# Archivos de datos y backups del host
+backend/data
+backend/backups
+backend/logs
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+backend/**/__pycache__
+backend/**/*.pyc
+
+# Variables de entorno reales (el compose las inyecta por env_file)
+backend/.env
+
+# Docs y archivos de desarrollo
+docs/
+*.md
+.claude/
