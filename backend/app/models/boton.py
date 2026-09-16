@@ -37,6 +37,19 @@ class Boton(Base):
     # Posición de la imagen de fondo. Valores = CSS background-position
     # directo: "center", "top", "bottom", "left", "right", "top left", etc.
     imagen_posicion: Mapped[str] = mapped_column(String(20), default="center")
+    # Dónde se ancla el título dentro del botón — mismos 9 valores que
+    # imagen_posicion, pero acá se traducen a grid-row/grid-column +
+    # justify-self/align-self del lado del frontend (ver KioskoPage.jsx).
+    texto_posicion: Mapped[str] = mapped_column(String(20), default="center")
+    # Dónde se ancla el stepper de cantidad (−  N  +). Solo aplica a
+    # botones tipo "simple" (el combo no tiene stepper en el tile).
+    controles_posicion: Mapped[str] = mapped_column(String(20), default="bottom")
+    # Familia tipográfica del texto del botón (título + número del stepper).
+    # Valor = CSS font-family directo, aplicado al contenedor del botón
+    # (se hereda a los hijos, así no hace falta repetirlo en cada uno).
+    texto_fuente: Mapped[str] = mapped_column(String(100), default="inherit")
+    # Tamaño en px del título (el stepper usa el mismo valor para su número).
+    texto_tamano: Mapped[int] = mapped_column(Integer, default=18)
 
     botonera: Mapped["Botonera"] = relationship("Botonera", back_populates="botones")
     opciones: Mapped[list["BotonOpcion"]] = relationship(

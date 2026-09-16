@@ -25,6 +25,24 @@ import dayjs from 'dayjs'
 const INACTIVITY_TIMEOUT = 60_000
 const SUCCESS_TIMEOUT    = 5_000
 
+// Traduce un anclaje de 9 posiciones (texto_posicion / controles_posicion,
+// mismos valores que imagen_posicion) a coordenadas dentro de la cuadrícula
+// interna 3×3 de .producto-btn (ver .producto-btn en index.css) — cada
+// elemento queda pegado al borde/esquina que le corresponde, en vez de
+// simplemente centrado dentro de su celda.
+const ANCHOR_GRID = {
+  'top left':     { gridRow: 1, gridColumn: 1, justifySelf: 'start',  alignSelf: 'start'  },
+  'top':          { gridRow: 1, gridColumn: 2, justifySelf: 'center', alignSelf: 'start'  },
+  'top right':    { gridRow: 1, gridColumn: 3, justifySelf: 'end',    alignSelf: 'start'  },
+  'left':         { gridRow: 2, gridColumn: 1, justifySelf: 'start',  alignSelf: 'center' },
+  'center':       { gridRow: 2, gridColumn: 2, justifySelf: 'center', alignSelf: 'center' },
+  'right':        { gridRow: 2, gridColumn: 3, justifySelf: 'end',    alignSelf: 'center' },
+  'bottom left':  { gridRow: 3, gridColumn: 1, justifySelf: 'start',  alignSelf: 'end'    },
+  'bottom':       { gridRow: 3, gridColumn: 2, justifySelf: 'center', alignSelf: 'end'    },
+  'bottom right': { gridRow: 3, gridColumn: 3, justifySelf: 'end',    alignSelf: 'end'    },
+}
+const anchorStyle = (pos) => ANCHOR_GRID[pos] || ANCHOR_GRID.center
+
 export default function KioskoPage() {
   const [estado, setEstado]           = useState('login')
   const [numero, setNumero]           = useState('')
@@ -349,6 +367,7 @@ function SelectionView({ empleado, botonera, seleccion, totalItems, onCambiar, o
                 backgroundRepeat: 'no-repeat',
               }
             : { background: b.color }
+          const tituloStyle = { ...anchorStyle(b.texto_posicion), fontSize: `${b.texto_tamano || 18}px` }
           const gridStyle = {}
           if (b.fila)        gridStyle.gridRow    = rs > 1 ? `${b.fila} / span ${rs}` : b.fila
           else if (rs > 1)   gridStyle.gridRow    = `span ${rs}`
@@ -361,15 +380,17 @@ function SelectionView({ empleado, botonera, seleccion, totalItems, onCambiar, o
               <div
                 key={b.id}
                 className={`producto-btn ${sel ? 'selected' : ''}`}
-                style={{ ...fondoStyle, ...gridStyle, cursor:'pointer' }}
+                style={{ ...fondoStyle, ...gridStyle, cursor:'pointer', fontFamily: b.texto_fuente || 'inherit' }}
                 onClick={() => setComboAbierto(b.id)}
               >
-                <span className="nombre">☰ {b.nombre}</span>
-                {sel ? (
-                  <span className="combo-resumen">{sel.opcionNombre} × {sel.cantidad}</span>
-                ) : (
-                  <span className="combo-hint">Toca para elegir ▾</span>
-                )}
+                <div style={{ ...anchorStyle(b.texto_posicion), display:'flex', flexDirection:'column', alignItems:'center', gap:2 }}>
+                  <span className="nombre" style={{ fontSize: tituloStyle.fontSize }}>☰ {b.nombre}</span>
+                  {sel ? (
+                    <span className="combo-resumen">{sel.opcionNombre} × {sel.cantidad}</span>
+                  ) : (
+                    <span className="combo-hint">Toca para elegir ▾</span>
+                  )}
+                </div>
               </div>
             )
           }
@@ -380,13 +401,13 @@ function SelectionView({ empleado, botonera, seleccion, totalItems, onCambiar, o
             <div
               key={b.id}
               className={`producto-btn ${cant > 0 ? 'selected' : ''}`}
-              style={{ ...fondoStyle, ...gridStyle }}
+              style={{ ...fondoStyle, ...gridStyle, fontFamily: b.texto_fuente || 'inherit' }}
             >
-              <span className="nombre">{b.nombre}</span>
+              <span className="nombre" style={tituloStyle}>{b.nombre}</span>
               {cant > 0 && <span className="cantidad-badge">{cant}</span>}
-              <div className="cantidad-controls">
+              <div className="cantidad-controls" style={anchorStyle(b.controles_posicion)}>
                 <button onClick={() => onCambiar(b, -1)} disabled={cant === 0}>−</button>
-                <span className="cantidad-num">{cant}</span>
+                <span className="cantidad-num" style={{ fontSize: `${b.texto_tamano || 18}px` }}>{cant}</span>
                 <button onClick={() => onCambiar(b, 1)} disabled={cant >= b.max_unidades}>+</button>
               </div>
             </div>

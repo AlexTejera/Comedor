@@ -32,6 +32,19 @@ const POSICION_OPTIONS = [
   { value: 'bottom left',  label: 'Abajo - izquierda' },
   { value: 'bottom right', label: 'Abajo - derecha' },
 ]
+// Fuentes "web-safe": están instaladas en cualquier PC/tablet sin necesidad
+// de cargar un archivo de fuente aparte (evita depender de conexión a
+// internet en el kiosko para verse bien).
+const FUENTE_OPTIONS = [
+  { value: 'inherit',                    label: 'Predeterminada' },
+  { value: 'Arial, Helvetica, sans-serif', label: 'Arial' },
+  { value: 'Georgia, serif',              label: 'Georgia (con serifas)' },
+  { value: "'Courier New', monospace",    label: 'Courier New (monoespaciada)' },
+  { value: 'Verdana, sans-serif',         label: 'Verdana' },
+  { value: "'Trebuchet MS', sans-serif",  label: 'Trebuchet MS' },
+  { value: "'Comic Sans MS', sans-serif", label: 'Comic Sans MS' },
+  { value: 'Impact, sans-serif',          label: 'Impact (gruesa)' },
+]
 
 export default function BotonerasPage() {
   const [botoneras, setBotoneras]           = useState([])
@@ -458,6 +471,28 @@ export default function BotonerasPage() {
               </div>
             ) : null}
           </Form.Item>
+
+          <Divider orientation="left" orientationMargin={0} style={{ fontSize: 13 }}>
+            Título del botón <Text type="secondary">(dentro del kiosko)</Text>
+          </Divider>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Form.Item name="texto_fuente" label="Fuente" initialValue="inherit">
+              <Select options={FUENTE_OPTIONS} />
+            </Form.Item>
+            <Form.Item name="texto_tamano" label="Tamaño (px)" initialValue={18}>
+              <InputNumber min={10} max={48} style={{ width: '100%' }} />
+            </Form.Item>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: tipoBoton === 'simple' ? '1fr 1fr' : '1fr', gap: 12 }}>
+            <Form.Item name="texto_posicion" label="Posición del título" initialValue="center">
+              <Select options={POSICION_OPTIONS} />
+            </Form.Item>
+            {tipoBoton === 'simple' && (
+              <Form.Item name="controles_posicion" label="Posición del −/+" initialValue="bottom">
+                <Select options={POSICION_OPTIONS} />
+              </Form.Item>
+            )}
+          </div>
 
           {/* Solo para simple */}
           {tipoBoton === 'simple' && (

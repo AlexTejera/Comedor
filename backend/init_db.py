@@ -34,6 +34,10 @@ def _migrate_columns(db: Session) -> None:
         ("ALTER TABLE boton_opciones ADD COLUMN icono_url VARCHAR(255)", "boton_opciones.icono_url"),
         ("ALTER TABLE botones ADD COLUMN imagen_ajuste VARCHAR(20) DEFAULT 'cover'", "botones.imagen_ajuste"),
         ("ALTER TABLE botones ADD COLUMN imagen_posicion VARCHAR(20) DEFAULT 'center'", "botones.imagen_posicion"),
+        ("ALTER TABLE botones ADD COLUMN texto_posicion VARCHAR(20) DEFAULT 'center'", "botones.texto_posicion"),
+        ("ALTER TABLE botones ADD COLUMN controles_posicion VARCHAR(20) DEFAULT 'bottom'", "botones.controles_posicion"),
+        ("ALTER TABLE botones ADD COLUMN texto_fuente VARCHAR(100) DEFAULT 'inherit'", "botones.texto_fuente"),
+        ("ALTER TABLE botones ADD COLUMN texto_tamano INTEGER DEFAULT 18", "botones.texto_tamano"),
     ]
     for sql, campo in migrations:
         try:

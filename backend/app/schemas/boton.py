@@ -19,6 +19,10 @@ class BotonCreate(BaseModel):
     icono_url: Optional[str] = None      # nombre de archivo en la galería
     imagen_ajuste: str = "cover"          # CSS background-size: cover | contain | "100% 100%"
     imagen_posicion: str = "center"       # CSS background-position: center | top | bottom | left | right | "top left" | ...
+    texto_posicion: str = "center"        # dónde se ancla el título (mismos 9 valores)
+    controles_posicion: str = "bottom"    # dónde se ancla el stepper −/+ (solo tipo "simple")
+    texto_fuente: str = "inherit"         # CSS font-family
+    texto_tamano: int = 18                # px del título (el stepper usa el mismo valor)
 
 
 class BotonUpdate(BaseModel):
@@ -36,6 +40,10 @@ class BotonUpdate(BaseModel):
     icono_url: Optional[str] = None
     imagen_ajuste: Optional[str] = None
     imagen_posicion: Optional[str] = None
+    texto_posicion: Optional[str] = None
+    controles_posicion: Optional[str] = None
+    texto_fuente: Optional[str] = None
+    texto_tamano: Optional[int] = None
 
 
 class BotonOut(BaseModel):
@@ -55,6 +63,10 @@ class BotonOut(BaseModel):
     icono_url: Optional[str] = None
     imagen_ajuste: str = "cover"
     imagen_posicion: str = "center"
+    texto_posicion: str = "center"
+    controles_posicion: str = "bottom"
+    texto_fuente: str = "inherit"
+    texto_tamano: int = 18
     opciones: list[BotonOpcionOut] = []
 
     model_config = {"from_attributes": True}
