@@ -61,6 +61,85 @@ def _connect(db: Session) -> pyodbc.Connection:
     return pyodbc.connect(conn_str, timeout=10)
 
 
+class SummaConnectionError(Exception):
+    """
+    Error al comunicarse con SUMMA (config incompleta, ODBC, o respuesta con
+    formato inesperado). Usado por los *_listar() de artículos/categorías/
+    subcategorías — a diferencia de crear/editar/eliminar, un listado no
+    tiene un {"Estado":"ERROR",...} propio al que degradar, así que el
+    router necesita distinguir "til vacía" de "no se pudo conectar" para
+    devolver un 503 en vez de mostrar una lista vacía engañosa.
+    """
+    pass
+
+
+# ── Helpers genéricos para los CRUD de artículos/categorías/subcategorías ─────
+# (validar_empleado/registrar_consumo/obtener_total_consumo de abajo tienen su
+# propio shape de respuesta y no usan estos helpers — quedan como estaban.)
+
+def _exec_status_sp(sp_name: str, db: Session, **params) -> dict:
+    """
+    Ejecuta un SP que sigue la convención {"Estado":"OK"|"ERROR","Mensaje":...}
+    en una sola fila/columna — usado por los *_crear/*_editar/*_eliminar.
+    """
+    try:
+        conn = _connect(db)
+        cursor = conn.cursor()
+        placeholders = ", ".join(f"@{k}=?" for k in params)
+        cursor.execute(f"EXEC dbo.{sp_name} {placeholders}", tuple(params.values()))
+        row = cursor.fetchone()
+        conn.commit()
+        conn.close()
+
+        if row is None:
+            return {"Estado": "ERROR", "Mensaje": "La consulta al servidor no retornó datos."}
+        return json.loads(row[0])
+
+    except ValueError as e:
+        logger.warning("Configuración SUMMA incompleta: %s", e)
+        return {"Estado": "ERROR", "Mensaje": str(e)}
+    except pyodbc.Error as e:
+        logger.error("Error ODBC en %s: %s", sp_name, e)
+        return {"Estado": "ERROR", "Mensaje": f"Error de comunicación con SUMMA: {str(e)[:200]}"}
+    except (json.JSONDecodeError, TypeError) as e:
+        logger.error("Respuesta inválida de SUMMA en %s: %s", sp_name, e)
+        return {"Estado": "ERROR", "Mensaje": "La respuesta del servidor no tiene el formato esperado."}
+
+
+def _exec_list_sp(sp_name: str, db: Session, **params) -> list:
+    """
+    Ejecuta un SP que retorna un array JSON en una sola fila/columna — usado
+    por los *_listar(). A diferencia de _exec_status_sp, acá un error SÍ se
+    propaga (SummaConnectionError) en vez de degradar a un valor por
+    defecto: una lista de artículos vacía por error de conexión no debe
+    verse igual que "no hay artículos cargados".
+    """
+    try:
+        conn = _connect(db)
+        cursor = conn.cursor()
+        if params:
+            placeholders = ", ".join(f"@{k}=?" for k in params)
+            cursor.execute(f"EXEC dbo.{sp_name} {placeholders}", tuple(params.values()))
+        else:
+            cursor.execute(f"EXEC dbo.{sp_name}")
+        row = cursor.fetchone()
+        conn.close()
+
+        if row is None or row[0] is None:
+            return []
+        return json.loads(row[0])
+
+    except ValueError as e:
+        logger.warning("Configuración SUMMA incompleta: %s", e)
+        raise SummaConnectionError(str(e)) from e
+    except pyodbc.Error as e:
+        logger.error("Error ODBC en %s: %s", sp_name, e)
+        raise SummaConnectionError(f"Error de comunicación con SUMMA: {str(e)[:200]}") from e
+    except (json.JSONDecodeError, TypeError) as e:
+        logger.error("Respuesta inválida de SUMMA en %s: %s", sp_name, e)
+        raise SummaConnectionError("La respuesta del servidor no tiene el formato esperado.") from e
+
+
 # ── API pública ──────────────────────────────────────────────────────────────
 
 def validar_empleado(numero_empleado: int, db: Session) -> dict:
@@ -170,6 +249,127 @@ def obtener_total_consumo(numero_empleado: int, db: Session) -> dict:
     except (json.JSONDecodeError, TypeError) as e:
         logger.error("Respuesta inválida de SUMMA al obtener total empleado %d: %s", numero_empleado, e)
         return {"Estado": "ERROR", "Total": 0, "Mensaje": "La respuesta del servidor no tiene el formato esperado."}
+
+
+# ── Artículos ─────────────────────────────────────────────────────────────────
+
+def listar_articulos(db: Session) -> list:
+    """Llama a dbo.sp_comedor_articulos_listar. Puede lanzar SummaConnectionError."""
+    return _exec_list_sp("sp_comedor_articulos_listar", db)
+
+
+def crear_articulo(
+    codigo: str, nombre: str, descripcion: Optional[str],
+    categoria: str, sub_categoria: str, precio: float, db: Session,
+) -> dict:
+    """Llama a dbo.sp_comedor_articulos_crear."""
+    return _exec_status_sp(
+        "sp_comedor_articulos_crear", db,
+        codigo=codigo, nombre=nombre, descripcion=descripcion or "",
+        categoria=categoria, sub_categoria=sub_categoria, precio=precio,
+    )
+
+
+def editar_articulo(
+    codigo: str, descripcion: Optional[str],
+    categoria: str, sub_categoria: str, precio: float, db: Session,
+) -> dict:
+    """
+    Llama a dbo.sp_comedor_articulos_editar. NO recibe nombre — el código y
+    el nombre de un artículo son inmutables (ver sql/sp_comedor_articulos.sql).
+    """
+    return _exec_status_sp(
+        "sp_comedor_articulos_editar", db,
+        codigo=codigo, descripcion=descripcion or "",
+        categoria=categoria, sub_categoria=sub_categoria, precio=precio,
+    )
+
+
+def eliminar_articulo(codigo: str, db: Session) -> dict:
+    """Llama a dbo.sp_comedor_articulos_eliminar."""
+    return _exec_status_sp("sp_comedor_articulos_eliminar", db, codigo=codigo)
+
+
+# ── Categorías y subcategorías ──────────────────────────────────────────────
+
+def listar_categorias(db: Session) -> list:
+    """Llama a dbo.sp_comedor_categorias_listar. Puede lanzar SummaConnectionError."""
+    return _exec_list_sp("sp_comedor_categorias_listar", db)
+
+
+def crear_categoria(categoria: str, db: Session) -> dict:
+    """Llama a dbo.sp_comedor_categorias_crear."""
+    return _exec_status_sp("sp_comedor_categorias_crear", db, categoria=categoria)
+
+
+def editar_categoria(categoria_actual: str, categoria_nueva: str, db: Session) -> dict:
+    """Llama a dbo.sp_comedor_categorias_editar (renombra en cascada, ver .sql)."""
+    return _exec_status_sp(
+        "sp_comedor_categorias_editar", db,
+        categoria_actual=categoria_actual, categoria_nueva=categoria_nueva,
+    )
+
+
+def eliminar_categoria(categoria: str, db: Session) -> dict:
+    """Llama a dbo.sp_comedor_categorias_eliminar (bloqueada si tiene artículos)."""
+    return _exec_status_sp("sp_comedor_categorias_eliminar", db, categoria=categoria)
+
+
+def listar_subcategorias(db: Session, categoria: Optional[str] = None) -> list:
+    """Llama a dbo.sp_comedor_subcategorias_listar. Puede lanzar SummaConnectionError."""
+    if categoria:
+        return _exec_list_sp("sp_comedor_subcategorias_listar", db, categoria=categoria)
+    return _exec_list_sp("sp_comedor_subcategorias_listar", db)
+
+
+def crear_subcategoria(categoria: str, sub_categoria: str, db: Session) -> dict:
+    """Llama a dbo.sp_comedor_subcategorias_crear."""
+    return _exec_status_sp(
+        "sp_comedor_subcategorias_crear", db,
+        categoria=categoria, sub_categoria=sub_categoria,
+    )
+
+
+def editar_subcategoria(
+    categoria: str, sub_categoria_actual: str, sub_categoria_nueva: str, db: Session,
+) -> dict:
+    """Llama a dbo.sp_comedor_subcategorias_editar (renombra en cascada, ver .sql)."""
+    return _exec_status_sp(
+        "sp_comedor_subcategorias_editar", db,
+        categoria=categoria, sub_categoria_actual=sub_categoria_actual,
+        sub_categoria_nueva=sub_categoria_nueva,
+    )
+
+
+def eliminar_subcategoria(categoria: str, sub_categoria: str, db: Session) -> dict:
+    """Llama a dbo.sp_comedor_subcategorias_eliminar (bloqueada si tiene artículos)."""
+    return _exec_status_sp(
+        "sp_comedor_subcategorias_eliminar", db,
+        categoria=categoria, sub_categoria=sub_categoria,
+    )
+
+
+def listar_categorias_arbol(db: Session) -> list:
+    """
+    Combina listar_categorias() + listar_subcategorias() en el árbol que
+    espera el frontend, en vez de anidar el JSON del lado de SQL Server:
+        [{"categoria": "Bebidas", "subCategorias": ["Aguas", "Gaseosas"]}, ...]
+    Puede lanzar SummaConnectionError (se propaga desde cualquiera de los dos).
+    """
+    categorias = listar_categorias(db)
+    subcategorias = listar_subcategorias(db)
+
+    por_categoria: dict[str, list[str]] = {}
+    for sc in subcategorias:
+        por_categoria.setdefault(sc["categoria"], []).append(sc["subCategoria"])
+
+    return [
+        {
+            "categoria": c["categoria"],
+            "subCategorias": sorted(por_categoria.get(c["categoria"], [])),
+        }
+        for c in categorias
+    ]
 
 
 def test_connection(db: Session) -> dict:

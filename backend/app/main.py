@@ -21,7 +21,7 @@ from app.database import get_db
 
 from app.database import engine, Base, SessionLocal
 from app.routers import auth, users, botoneras, kiosko, logs, settings, backup
-from app.routers import soap_estado
+from app.routers import soap_estado, articulos, categorias
 
 logging.basicConfig(
     level=logging.INFO,
@@ -75,6 +75,8 @@ app.include_router(kiosko.router,    prefix="/api/kiosko",    tags=["kiosko"])
 app.include_router(logs.router,      prefix="/api/logs",      tags=["logs"])
 app.include_router(settings.router,  prefix="/api/settings",  tags=["settings"])
 app.include_router(backup.router,    prefix="/api/backup",    tags=["backup"])
+app.include_router(articulos.router,  prefix="/api/articulos",  tags=["articulos"])
+app.include_router(categorias.router, prefix="/api/categorias", tags=["categorias"])
 
 # ── Servicio SOAP de estado (watchdog) ────────────────────────────────────────
 app.include_router(soap_estado.router, prefix="/soap", tags=["soap"])

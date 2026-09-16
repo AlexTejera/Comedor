@@ -11,6 +11,8 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   CoffeeOutlined,
+  ShoppingOutlined,
+  ApartmentOutlined,
 } from '@ant-design/icons'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
@@ -21,6 +23,8 @@ const { Text } = Typography
 const menuItems = [
   { key: '/admin', icon: <DashboardOutlined />, label: 'Dashboard' },
   { key: '/admin/botoneras', icon: <AppstoreOutlined />, label: 'Botoneras' },
+  { key: '/admin/articulos', icon: <ShoppingOutlined />, label: 'Artículos' },
+  { key: '/admin/categorias', icon: <ApartmentOutlined />, label: 'Categorías' },
   { key: '/admin/logs', icon: <HistoryOutlined />, label: 'Historial' },
   { key: '/admin/settings', icon: <SettingOutlined />, label: 'Configuración' },
   { key: '/admin/users', icon: <UserOutlined />, label: 'Usuarios' },
