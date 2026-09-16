@@ -35,6 +35,7 @@ export default function KioskoPage() {
   const [ahora, setAhora]             = useState(dayjs())
   const [mostrarNumpad, setMostrarNumpad] = useState(true)  // default: visible
   const [totalConsumo, setTotalConsumo]   = useState(null)  // null = no disponible aún
+  const [logoUrl, setLogoUrl]             = useState(null)  // null = sin logo configurado (fallback a texto)
   const inactivityTimer               = useRef(null)
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export default function KioskoPage() {
         if (cfg.mostrar_numpad !== undefined) {
           setMostrarNumpad(cfg.mostrar_numpad !== 'false')
         }
+        if (cfg.logo_url) setLogoUrl(cfg.logo_url)
       })
       .catch(() => { /* si falla, mantiene el default visible */ })
   }, [])
@@ -183,7 +185,11 @@ export default function KioskoPage() {
   return (
     <div className="kiosko-root" onClick={resetInactivity} onKeyDown={resetInactivity}>
       <header className="kiosko-header">
-        <span className="kiosko-logo">🍽️ Comedor — Aluminios del Uruguay</span>
+        {logoUrl ? (
+          <img className="kiosko-logo-img" src={logoUrl} alt="Logo de la empresa" />
+        ) : (
+          <span className="kiosko-logo">🍽️ Comedor — Aluminios del Uruguay</span>
+        )}
         <span className="kiosko-time">{ahora.format('HH:mm:ss')}</span>
       </header>
 
@@ -345,6 +351,7 @@ function SelectionView({ empleado, botonera, seleccion, totalItems, onCambiar, o
                 style={{ background: b.color, ...gridStyle, cursor:'pointer' }}
                 onClick={() => setComboAbierto(b.id)}
               >
+                {b.icono_url && <img className="producto-btn-icono" src={b.icono_url} alt="" />}
                 <span className="nombre">☰ {b.nombre}</span>
                 {sel ? (
                   <span className="combo-resumen">{sel.opcionNombre} × {sel.cantidad}</span>
@@ -363,6 +370,7 @@ function SelectionView({ empleado, botonera, seleccion, totalItems, onCambiar, o
               className={`producto-btn ${cant > 0 ? 'selected' : ''}`}
               style={{ background: b.color, ...gridStyle }}
             >
+              {b.icono_url && <img className="producto-btn-icono" src={b.icono_url} alt="" />}
               <span className="nombre">{b.nombre}</span>
               {cant > 0 && <span className="cantidad-badge">{cant}</span>}
               <div className="cantidad-controls">
@@ -423,6 +431,7 @@ function ComboOverlay({ boton, seleccion, onElegir, onCantidad, onCerrar }) {
                   <div key={op.id} className={`combo-panel-opcion ${elegida ? 'elegida' : ''}`}>
                     <button className="combo-panel-opcion-btn" onClick={() => onElegir(op)}>
                       <span className="combo-radio-icon">{elegida ? '●' : '○'}</span>
+                      {op.icono_url && <img className="combo-opcion-icono" src={op.icono_url} alt="" />}
                       <span className="combo-opcion-nombre">{op.nombre}</span>
                       {op.max_unidades > 1 && (
                         <span className="combo-opcion-max">máx {op.max_unidades}</span>

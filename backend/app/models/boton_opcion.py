@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy import Integer, String, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -15,5 +17,7 @@ class BotonOpcion(Base):
     producto_codigo: Mapped[str] = mapped_column(String(50), nullable=False)
     orden: Mapped[int] = mapped_column(Integer, default=0)
     max_unidades: Mapped[int] = mapped_column(Integer, default=1)
+    # Nombre de archivo en la galería (backend/data/uploads/) — None = sin ícono
+    icono_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     boton: Mapped["Boton"] = relationship("Boton", back_populates="opciones")

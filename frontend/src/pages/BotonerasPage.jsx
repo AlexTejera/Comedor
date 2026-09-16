@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react'
 import {
   Table, Button, Modal, Form, Input, InputNumber, Switch, Space,
   Typography, Tag, Drawer, ColorPicker, Popconfirm, message, Tooltip,
-  Badge, Divider, Radio, List, Empty,
+  Badge, Divider, Radio, List, Empty, Select,
 } from 'antd'
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined,
   AppstoreAddOutlined, AppstoreOutlined, UnorderedListOutlined,
 } from '@ant-design/icons'
 import { botoneraService } from '../services/botoneraService'
+import { articuloService } from '../services/articuloService'
+import { GalleryPicker } from '../components/common/GalleryPicker'
 
 const { Title, Text } = Typography
 
@@ -32,6 +34,7 @@ export default function BotonerasPage() {
   const [formBotonera]  = Form.useForm()
   const [formBoton]     = Form.useForm()
   const [formOpcion]    = Form.useForm()
+  const [articulos, setArticulos] = useState([])  // catálogo completo (Comedor → Artículos)
 
   const load = async () => {
     setLoading(true)
@@ -40,7 +43,35 @@ export default function BotonerasPage() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { load() }, [])
+  const loadArticulos = async () => {
+    try { setArticulos(await articuloService.getAll()) }
+    catch { message.warning('No se pudo cargar el catálogo de artículos — el selector de producto puede aparecer vacío.') }
+  }
+
+  useEffect(() => { load(); loadArticulos() }, [])
+
+  // Opciones del selector de "Código de producto": solo artículos habilitados.
+  // Si el botón/opción que se está editando usa un código que ya no está
+  // habilitado (o fue borrado del catálogo), se agrega igual como primera
+  // opción — así se sigue viendo seleccionado en vez de aparecer vacío, y
+  // el admin decide si lo cambia o lo deja así.
+  const articuloOptions = (currentCodigo) => {
+    const habilitados = articulos.filter((a) => a.habilitado)
+    const opts = habilitados.map((a) => ({
+      value: a.codigo,
+      label: `${a.codigo} — ${a.nombre} ($${Number(a.precio).toFixed(2)})`,
+    }))
+    if (currentCodigo && !habilitados.some((a) => a.codigo === currentCodigo)) {
+      const existente = articulos.find((a) => a.codigo === currentCodigo)
+      opts.unshift({
+        value: currentCodigo,
+        label: existente
+          ? `${currentCodigo} — ${existente.nombre} (⚠ no habilitado)`
+          : `${currentCodigo} (⚠ no encontrado en Artículos)`,
+      })
+    }
+    return opts
+  }
 
   // ── CRUD Botoneras ────────────────────────────────────────
   const openBotoneraModal = (botonera = null) => {
@@ -391,10 +422,20 @@ export default function BotonerasPage() {
             <Input placeholder={tipoBoton === 'combo' ? 'Ej: Almuerzo' : 'Ej: Menú del día'} />
           </Form.Item>
 
+          <Form.Item name="icono_url" label="Ícono" help="Se muestra en el botón dentro del kiosko, encima del título.">
+            <GalleryPicker label="Elegir ícono" />
+          </Form.Item>
+
           {/* Solo para simple */}
           {tipoBoton === 'simple' && (
-            <Form.Item name="producto_codigo" label="Código de producto (SUMMA)" rules={[{ required: true }]}>
-              <Input placeholder="Ej: MENU01" />
+            <Form.Item name="producto_codigo" label="Código de producto" rules={[{ required: true }]}>
+              <Select
+                showSearch
+                placeholder="Buscar artículo por código o nombre..."
+                optionFilterProp="label"
+                options={articuloOptions(editBoton?.producto_codigo)}
+                notFoundContent={articulos.length === 0 ? 'Cargando artículos...' : 'Sin resultados'}
+              />
             </Form.Item>
           )}
           {tipoBoton === 'combo' && (
@@ -508,8 +549,17 @@ export default function BotonerasPage() {
           <Form.Item name="nombre" label="Nombre de la opción" rules={[{ required: true }]}>
             <Input placeholder="Ej: Milanesa con papas" />
           </Form.Item>
-          <Form.Item name="producto_codigo" label="Código de producto (SUMMA)" rules={[{ required: true }]}>
-            <Input placeholder="Ej: MILANESA01" />
+          <Form.Item name="icono_url" label="Ícono" help="Se muestra junto al nombre de la opción dentro del combo.">
+            <GalleryPicker label="Elegir ícono" />
+          </Form.Item>
+          <Form.Item name="producto_codigo" label="Código de producto" rules={[{ required: true }]}>
+            <Select
+              showSearch
+              placeholder="Buscar artículo por código o nombre..."
+              optionFilterProp="label"
+              options={articuloOptions(editOpcion?.producto_codigo)}
+              notFoundContent={articulos.length === 0 ? 'Cargando artículos...' : 'Sin resultados'}
+            />
           </Form.Item>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <Form.Item name="max_unidades" label="Máximo de unidades" initialValue={1}

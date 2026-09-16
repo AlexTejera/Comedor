@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Form, Input, InputNumber, Button, Card, Typography, Alert, Space, Divider, Switch, message } from 'antd'
 import { SaveOutlined, ApiOutlined } from '@ant-design/icons'
 import { settingsService } from '../services/settingsService'
+import { GalleryPicker } from '../components/common/GalleryPicker'
 
 const { Title, Text } = Typography
 
@@ -112,6 +113,13 @@ export default function SettingsPage() {
         </Card>
 
         <Card title="🖥️ Kiosko" style={{ marginBottom: 16 }}>
+          <Form.Item
+            name="logo_url"
+            label="Logo de la empresa"
+            help="Se muestra en el encabezado de la pantalla de ingreso del kiosko. Si no se elige ninguno, se usa el texto por defecto."
+          >
+            <GalleryPicker label="Elegir logo" />
+          </Form.Item>
           <Form.Item
             name="mostrar_numpad"
             label="Mostrar teclado numérico en pantalla de login"

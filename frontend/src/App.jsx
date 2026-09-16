@@ -10,6 +10,7 @@ import DashboardPage from './pages/DashboardPage'
 import BotonerasPage from './pages/BotonerasPage'
 import ArticulosPage from './pages/ArticulosPage'
 import CategoriasPage from './pages/CategoriasPage'
+import GaleriaPage    from './pages/GaleriaPage'
 import LogsPage      from './pages/LogsPage'
 import SettingsPage  from './pages/SettingsPage'
 import UsersPage     from './pages/UsersPage'
@@ -37,6 +38,7 @@ export default function App() {
           <Route path="botoneras" element={<BotonerasPage />} />
           <Route path="articulos" element={<ArticulosPage />} />
           <Route path="categorias" element={<CategoriasPage />} />
+          <Route path="galeria" element={<GaleriaPage />} />
           <Route path="logs" element={<LogsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="users" element={<UsersPage />} />

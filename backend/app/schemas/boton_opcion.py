@@ -7,6 +7,7 @@ class BotonOpcionCreate(BaseModel):
     producto_codigo: str
     orden: int = 0
     max_unidades: int = 1
+    icono_url: Optional[str] = None  # nombre de archivo en la galería
 
 
 class BotonOpcionUpdate(BaseModel):
@@ -14,6 +15,7 @@ class BotonOpcionUpdate(BaseModel):
     producto_codigo: Optional[str] = None
     orden: Optional[int] = None
     max_unidades: Optional[int] = None
+    icono_url: Optional[str] = None
 
 
 class BotonOpcionOut(BaseModel):
@@ -23,5 +25,6 @@ class BotonOpcionOut(BaseModel):
     producto_codigo: str
     orden: int
     max_unidades: int = 1
+    icono_url: Optional[str] = None
 
     model_config = {"from_attributes": True}

@@ -14,6 +14,7 @@ from pathlib import Path
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
@@ -21,7 +22,7 @@ from app.database import get_db
 
 from app.database import engine, Base, SessionLocal
 from app.routers import auth, users, botoneras, kiosko, logs, settings, backup
-from app.routers import soap_estado, articulos, categorias
+from app.routers import soap_estado, articulos, categorias, gallery
 
 logging.basicConfig(
     level=logging.INFO,
@@ -77,9 +78,17 @@ app.include_router(settings.router,  prefix="/api/settings",  tags=["settings"])
 app.include_router(backup.router,    prefix="/api/backup",    tags=["backup"])
 app.include_router(articulos.router,  prefix="/api/articulos",  tags=["articulos"])
 app.include_router(categorias.router, prefix="/api/categorias", tags=["categorias"])
+app.include_router(gallery.router,    prefix="/api/gallery",    tags=["gallery"])
 
 # ── Servicio SOAP de estado (watchdog) ────────────────────────────────────────
 app.include_router(soap_estado.router, prefix="/soap", tags=["soap"])
+
+# ── Galería de imágenes subidas (logo, íconos de botones) ─────────────────────
+# Igual que las rutas /api/* de arriba, este mount DEBE ir antes del catch-all
+# del SPA (más abajo) — si no, el catch-all lo tapa y nunca sirve las imágenes.
+_uploads_dir = Path(__file__).parent.parent / "data" / "uploads"
+_uploads_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(_uploads_dir)), name="uploads")
 
 
 @app.get("/api/health", tags=["health"])

@@ -16,6 +16,7 @@ class BotonCreate(BaseModel):
     col_span: int = 1               # ancho en columnas
     row_span: int = 1               # alto en filas
     tipo: str = "simple"            # "simple" | "combo"
+    icono_url: Optional[str] = None  # nombre de archivo en la galería
 
 
 class BotonUpdate(BaseModel):
@@ -30,6 +31,7 @@ class BotonUpdate(BaseModel):
     col_span: Optional[int] = None
     row_span: Optional[int] = None
     tipo: Optional[str] = None
+    icono_url: Optional[str] = None
 
 
 class BotonOut(BaseModel):
@@ -46,6 +48,7 @@ class BotonOut(BaseModel):
     col_span: int = 1
     row_span: int = 1
     tipo: str = "simple"
+    icono_url: Optional[str] = None
     opciones: list[BotonOpcionOut] = []
 
     model_config = {"from_attributes": True}

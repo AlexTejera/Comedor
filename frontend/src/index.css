@@ -35,6 +35,12 @@ body {
   color: #fff;
 }
 
+.kiosko-logo-img {
+  height: 36px;
+  max-width: 240px;
+  object-fit: contain;
+}
+
 .kiosko-time {
   font-size: 18px;
   font-weight: 600;
@@ -169,6 +175,14 @@ body {
 .producto-btn.selected {
   border-color: #fff;
   box-shadow: 0 0 0 2px rgba(255,255,255,0.5), 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.producto-btn-icono {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.12);
 }
 
 .producto-btn .nombre {
@@ -372,6 +386,14 @@ body {
   flex-shrink: 0;
   color: #52c41a;
   line-height: 1;
+}
+
+.combo-opcion-icono {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+  flex-shrink: 0;
 }
 
 .combo-opcion-nombre {

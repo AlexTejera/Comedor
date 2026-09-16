@@ -27,6 +27,8 @@ class Boton(Base):
     row_span: Mapped[int] = mapped_column(Integer, default=1)  # alto en filas
     # Tipo: "simple" (un solo producto) | "combo" (elige una opción de una lista)
     tipo: Mapped[str] = mapped_column(String(10), default="simple")
+    # Nombre de archivo en la galería (backend/data/uploads/) — None = sin ícono
+    icono_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     botonera: Mapped["Botonera"] = relationship("Botonera", back_populates="botones")
     opciones: Mapped[list["BotonOpcion"]] = relationship(

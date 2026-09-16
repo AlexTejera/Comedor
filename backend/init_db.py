@@ -10,6 +10,7 @@ from sqlalchemy import text
 from app.models.user import User
 from app.models.settings import SystemSetting
 from app.models.boton_opcion import BotonOpcion  # registra la tabla con Base
+from app.models.gallery_image import GalleryImage  # registra la tabla con Base
 from app.utils.security import hash_password
 
 
@@ -29,6 +30,8 @@ def _migrate_columns(db: Session) -> None:
         ("ALTER TABLE botoneras ADD COLUMN num_filas    INTEGER DEFAULT 3",      "botoneras.num_filas"),
         ("ALTER TABLE botones   ADD COLUMN tipo         VARCHAR(10) DEFAULT 'simple'", "botones.tipo"),
         ("ALTER TABLE boton_opciones ADD COLUMN max_unidades INTEGER DEFAULT 1",       "boton_opciones.max_unidades"),
+        ("ALTER TABLE botones        ADD COLUMN icono_url VARCHAR(255)", "botones.icono_url"),
+        ("ALTER TABLE boton_opciones ADD COLUMN icono_url VARCHAR(255)", "boton_opciones.icono_url"),
     ]
     for sql, campo in migrations:
         try:
@@ -64,6 +67,7 @@ def init_db(db: Session) -> None:
         ("summa_driver",   "ODBC Driver 18 for SQL Server","Driver ODBC instalado en el servidor"),
         ("log_max_records","2000",                          "Máximo de registros en el historial"),
         ("mostrar_numpad",  "true",                          "Mostrar teclado numérico en la pantalla de login del kiosko"),
+        ("logo_url",        "",                              "Nombre de archivo (en la galería) del logo de la empresa, mostrado en la pantalla de ingreso del kiosko"),
     ]
     for key, value, desc in defaults:
         if not db.query(SystemSetting).filter(SystemSetting.key == key).first():

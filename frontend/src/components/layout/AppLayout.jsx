@@ -13,6 +13,7 @@ import {
   CoffeeOutlined,
   ShoppingOutlined,
   ApartmentOutlined,
+  PictureOutlined,
 } from '@ant-design/icons'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
@@ -25,6 +26,7 @@ const menuItems = [
   { key: '/admin/botoneras', icon: <AppstoreOutlined />, label: 'Botoneras' },
   { key: '/admin/articulos', icon: <ShoppingOutlined />, label: 'Artículos' },
   { key: '/admin/categorias', icon: <ApartmentOutlined />, label: 'Categorías' },
+  { key: '/admin/galeria', icon: <PictureOutlined />, label: 'Galería' },
   { key: '/admin/logs', icon: <HistoryOutlined />, label: 'Historial' },
   { key: '/admin/settings', icon: <SettingOutlined />, label: 'Configuración' },
   { key: '/admin/users', icon: <UserOutlined />, label: 'Usuarios' },

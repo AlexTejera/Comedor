@@ -66,6 +66,7 @@ def _serializar_opcion(op) -> dict:
         "producto_codigo": op.producto_codigo,
         "orden":           op.orden,
         "max_unidades":    op.max_unidades if op.max_unidades is not None else 1,
+        "icono_url":       f"/uploads/{op.icono_url}" if op.icono_url else None,
     }
 
 
@@ -91,6 +92,7 @@ def _serializar_botonera(botonera: Botonera) -> dict:
                 "col_span":        b.col_span or 1,
                 "row_span":        b.row_span or 1,
                 "tipo":            b.tipo or "simple",
+                "icono_url":       f"/uploads/{b.icono_url}" if b.icono_url else None,
                 "opciones": [
                     _serializar_opcion(op)
                     for op in sorted(b.opciones, key=lambda o: o.orden)
@@ -106,9 +108,13 @@ def _serializar_botonera(botonera: Botonera) -> dict:
 @router.get("/config")
 def kiosko_config(db: Session = Depends(get_db)):
     """Configuración pública del kiosko (sin datos sensibles, sin autenticación)."""
-    PUBLIC_KEYS = {"mostrar_numpad"}
+    PUBLIC_KEYS = {"mostrar_numpad", "logo_url"}
     settings = db.query(SystemSetting).filter(SystemSetting.key.in_(PUBLIC_KEYS)).all()
-    return {s.key: s.value for s in settings}
+    result = {s.key: s.value for s in settings}
+    # logo_url en la BD es solo el nombre de archivo — acá se arma la ruta pública completa
+    if result.get("logo_url"):
+        result["logo_url"] = f"/uploads/{result['logo_url']}"
+    return result
 
 
 @router.post("/validar-empleado")
