@@ -7,8 +7,8 @@
  */
 import { useState, useEffect } from 'react'
 import {
-  Table, Button, Modal, Form, Input, InputNumber, Select,
-  Space, Typography, Popconfirm, message, Alert,
+  Table, Button, Modal, Form, Input, InputNumber, Select, Switch,
+  Space, Typography, Popconfirm, message, Alert, Tag,
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { articuloService } from '../services/articuloService'
@@ -61,8 +61,8 @@ export default function ArticulosPage() {
     const values = await form.validateFields()
     try {
       if (editTarget) {
-        const { descripcion, categoria, sub_categoria, precio } = values
-        await articuloService.update(editTarget.codigo, { descripcion, categoria, sub_categoria, precio })
+        const { descripcion, categoria, sub_categoria, precio, habilitado } = values
+        await articuloService.update(editTarget.codigo, { descripcion, categoria, sub_categoria, precio, habilitado })
         message.success('Artículo actualizado.')
       } else {
         await articuloService.create(values)
@@ -94,6 +94,10 @@ export default function ArticulosPage() {
     {
       title: 'Precio', dataIndex: 'precio', key: 'precio', width: 110, align: 'right',
       render: (v) => `$ ${Number(v).toFixed(2)}`,
+    },
+    {
+      title: 'Habilitado', dataIndex: 'habilitado', key: 'habilitado', width: 100, align: 'center',
+      render: (v) => v ? <Tag color="success">Sí</Tag> : <Tag>No</Tag>,
     },
     {
       title: 'Acciones', key: 'acc', width: 100,
@@ -181,6 +185,9 @@ export default function ArticulosPage() {
           </Form.Item>
           <Form.Item name="precio" label="Precio" initialValue={0} rules={[{ required: true, message: 'El precio es requerido.' }]}>
             <InputNumber min={0} step={0.01} precision={2} style={{ width: '100%' }} addonBefore="$" />
+          </Form.Item>
+          <Form.Item name="habilitado" label="Habilitado" valuePropName="checked" initialValue={true}>
+            <Switch checkedChildren="Sí" unCheckedChildren="No" />
           </Form.Item>
         </Form>
       </Modal>

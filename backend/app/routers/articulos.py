@@ -48,6 +48,7 @@ def create_articulo(data: ArticuloCreate, db: Session = Depends(get_db), _=Depen
         categoria=data.categoria,
         sub_categoria=data.sub_categoria,
         precio=data.precio,
+        habilitado=data.habilitado,
         db=db,
     )
     if resultado.get("Estado") != "OK":
@@ -67,6 +68,7 @@ def update_articulo(codigo: str, data: ArticuloUpdate, db: Session = Depends(get
         categoria=data.categoria,
         sub_categoria=data.sub_categoria,
         precio=data.precio,
+        habilitado=data.habilitado,
         db=db,
     )
     if resultado.get("Estado") != "OK":

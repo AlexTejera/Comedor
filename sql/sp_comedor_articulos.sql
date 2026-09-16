@@ -19,6 +19,13 @@ TABLA
     sub_categoria     VARCHAR(50)     → debe existir en dbo.sub_categoria
                                          para esa Categoria
     precio            DECIMAL(10,4)
+    Habilitado        VARCHAR(50)     → 'Si' / 'No' (mismo estilo que
+                                         Usuario.Habilitado, pero acá con la
+                                         palabra completa en vez de 'S'/'N').
+                                         Los SPs lo traducen a/desde BIT para
+                                         que el resto del sistema use un
+                                         booleano normal, sin preocuparse por
+                                         el formato exacto en la tabla.
 
 REGLA DE NEGOCIO IMPORTANTE
 ────────────────────────────
@@ -35,8 +42,8 @@ REGLA DE NEGOCIO IMPORTANTE
 SPs EN ESTE SCRIPT
 ───────────────────
   sp_comedor_articulos_listar()
-  sp_comedor_articulos_crear(@codigo, @nombre, @descripcion, @categoria, @sub_categoria, @precio)
-  sp_comedor_articulos_editar(@codigo, @descripcion, @categoria, @sub_categoria, @precio)
+  sp_comedor_articulos_crear(@codigo, @nombre, @descripcion, @categoria, @sub_categoria, @precio, @habilitado = 1)
+  sp_comedor_articulos_editar(@codigo, @descripcion, @categoria, @sub_categoria, @precio, @habilitado)
   sp_comedor_articulos_eliminar(@codigo)
 
 RESPUESTA (primera fila, primera columna — string JSON)
@@ -70,7 +77,8 @@ BEGIN
                 descripcion,
                 Categoria        AS categoria,
                 sub_categoria    AS subCategoria,
-                precio
+                precio,
+                CAST(CASE WHEN Habilitado = 'Si' THEN 1 ELSE 0 END AS BIT) AS habilitado
             FROM dbo.Articulos
             ORDER BY nombre_articulo
             FOR JSON PATH
@@ -94,12 +102,13 @@ GO
 -- ── 2. Crear un artículo ───────────────────────────────────────────────────────
 
 CREATE OR ALTER PROCEDURE dbo.sp_comedor_articulos_crear
-    @codigo       VARCHAR(50),
-    @nombre       VARCHAR(50),
-    @descripcion  VARCHAR(300),
-    @categoria    VARCHAR(50),
+    @codigo        VARCHAR(50),
+    @nombre        VARCHAR(50),
+    @descripcion   VARCHAR(300),
+    @categoria     VARCHAR(50),
     @sub_categoria VARCHAR(50),
-    @precio       DECIMAL(10,4)
+    @precio        DECIMAL(10,4),
+    @habilitado    BIT = 1
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -142,9 +151,10 @@ BEGIN
         END;
 
         INSERT INTO dbo.Articulos
-            (Articulo_consumo, nombre_articulo, descripcion, Categoria, sub_categoria, precio)
+            (Articulo_consumo, nombre_articulo, descripcion, Categoria, sub_categoria, precio, Habilitado)
         VALUES
-            (@codigo, @nombre, @descripcion, @categoria, @sub_categoria, ISNULL(@precio, 0));
+            (@codigo, @nombre, @descripcion, @categoria, @sub_categoria, ISNULL(@precio, 0),
+             CASE WHEN ISNULL(@habilitado, 1) = 1 THEN 'Si' ELSE 'No' END);
 
         SELECT '{"Estado":"OK","Mensaje":"Articulo creado correctamente."}';
 
@@ -167,7 +177,8 @@ CREATE OR ALTER PROCEDURE dbo.sp_comedor_articulos_editar
     @descripcion   VARCHAR(300),
     @categoria     VARCHAR(50),
     @sub_categoria VARCHAR(50),
-    @precio        DECIMAL(10,4)
+    @precio        DECIMAL(10,4),
+    @habilitado    BIT
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -199,7 +210,8 @@ BEGIN
         SET descripcion   = @descripcion,
             Categoria     = @categoria,
             sub_categoria = @sub_categoria,
-            precio        = ISNULL(@precio, 0)
+            precio        = ISNULL(@precio, 0),
+            Habilitado    = CASE WHEN @habilitado = 1 THEN 'Si' ELSE 'No' END
         WHERE Articulo_consumo = @codigo;
 
         SELECT '{"Estado":"OK","Mensaje":"Articulo actualizado correctamente."}';
@@ -265,11 +277,11 @@ EXEC dbo.sp_comedor_articulos_listar;
 
 EXEC dbo.sp_comedor_articulos_crear
     @codigo = 'AGUA500', @nombre = 'Agua 500ml', @descripcion = 'Botella de agua sin gas',
-    @categoria = 'Bebidas', @sub_categoria = 'Aguas', @precio = 45.00;
+    @categoria = 'Bebidas', @sub_categoria = 'Aguas', @precio = 45.00, @habilitado = 1;
 
 EXEC dbo.sp_comedor_articulos_editar
     @codigo = 'AGUA500', @descripcion = 'Botella de agua sin gas 500ml',
-    @categoria = 'Bebidas', @sub_categoria = 'Aguas', @precio = 48.00;
+    @categoria = 'Bebidas', @sub_categoria = 'Aguas', @precio = 48.00, @habilitado = 0;
 
 EXEC dbo.sp_comedor_articulos_eliminar @codigo = 'AGUA500';
 */

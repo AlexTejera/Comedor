@@ -9,6 +9,7 @@ class ArticuloCreate(BaseModel):
     categoria: str
     sub_categoria: str
     precio: float = 0
+    habilitado: bool = True
 
 
 class ArticuloUpdate(BaseModel):
@@ -21,6 +22,7 @@ class ArticuloUpdate(BaseModel):
     categoria: str
     sub_categoria: str
     precio: float = 0
+    habilitado: bool = True
 
 
 class ArticuloOut(BaseModel):
@@ -30,3 +32,4 @@ class ArticuloOut(BaseModel):
     categoria: str
     subCategoria: str
     precio: float
+    habilitado: bool = True

@@ -260,19 +260,20 @@ def listar_articulos(db: Session) -> list:
 
 def crear_articulo(
     codigo: str, nombre: str, descripcion: Optional[str],
-    categoria: str, sub_categoria: str, precio: float, db: Session,
+    categoria: str, sub_categoria: str, precio: float, habilitado: bool, db: Session,
 ) -> dict:
     """Llama a dbo.sp_comedor_articulos_crear."""
     return _exec_status_sp(
         "sp_comedor_articulos_crear", db,
         codigo=codigo, nombre=nombre, descripcion=descripcion or "",
         categoria=categoria, sub_categoria=sub_categoria, precio=precio,
+        habilitado=habilitado,
     )
 
 
 def editar_articulo(
     codigo: str, descripcion: Optional[str],
-    categoria: str, sub_categoria: str, precio: float, db: Session,
+    categoria: str, sub_categoria: str, precio: float, habilitado: bool, db: Session,
 ) -> dict:
     """
     Llama a dbo.sp_comedor_articulos_editar. NO recibe nombre — el código y
@@ -282,6 +283,7 @@ def editar_articulo(
         "sp_comedor_articulos_editar", db,
         codigo=codigo, descripcion=descripcion or "",
         categoria=categoria, sub_categoria=sub_categoria, precio=precio,
+        habilitado=habilitado,
     )
 
 
