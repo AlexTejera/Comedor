@@ -336,6 +336,18 @@ function SelectionView({ empleado, botonera, seleccion, totalItems, onCambiar, o
       >
         {botonera.botones.map(b => {
           const cs = b.col_span || 1; const rs = b.row_span || 1
+          // Si el botón tiene ícono, se usa como FONDO del botón (foto de
+          // producto), con un velo oscuro encima para que el texto blanco
+          // siga siendo legible sin importar el contenido de la imagen.
+          // Sin ícono, se usa el color plano configurado (comportamiento previo).
+          const fondoStyle = b.icono_url
+            ? {
+                backgroundColor: b.color,
+                backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${b.icono_url})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }
+            : { background: b.color }
           const gridStyle = {}
           if (b.fila)        gridStyle.gridRow    = rs > 1 ? `${b.fila} / span ${rs}` : b.fila
           else if (rs > 1)   gridStyle.gridRow    = `span ${rs}`
@@ -348,10 +360,9 @@ function SelectionView({ empleado, botonera, seleccion, totalItems, onCambiar, o
               <div
                 key={b.id}
                 className={`producto-btn ${sel ? 'selected' : ''}`}
-                style={{ background: b.color, ...gridStyle, cursor:'pointer' }}
+                style={{ ...fondoStyle, ...gridStyle, cursor:'pointer' }}
                 onClick={() => setComboAbierto(b.id)}
               >
-                {b.icono_url && <img className="producto-btn-icono" src={b.icono_url} alt="" />}
                 <span className="nombre">☰ {b.nombre}</span>
                 {sel ? (
                   <span className="combo-resumen">{sel.opcionNombre} × {sel.cantidad}</span>
@@ -368,9 +379,8 @@ function SelectionView({ empleado, botonera, seleccion, totalItems, onCambiar, o
             <div
               key={b.id}
               className={`producto-btn ${cant > 0 ? 'selected' : ''}`}
-              style={{ background: b.color, ...gridStyle }}
+              style={{ ...fondoStyle, ...gridStyle }}
             >
-              {b.icono_url && <img className="producto-btn-icono" src={b.icono_url} alt="" />}
               <span className="nombre">{b.nombre}</span>
               {cant > 0 && <span className="cantidad-badge">{cant}</span>}
               <div className="cantidad-controls">

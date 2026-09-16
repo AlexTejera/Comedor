@@ -422,8 +422,8 @@ export default function BotonerasPage() {
             <Input placeholder={tipoBoton === 'combo' ? 'Ej: Almuerzo' : 'Ej: Menú del día'} />
           </Form.Item>
 
-          <Form.Item name="icono_url" label="Ícono" help="Se muestra en el botón dentro del kiosko, encima del título.">
-            <GalleryPicker label="Elegir ícono" />
+          <Form.Item name="icono_url" label="Imagen de fondo" help="Se usa como fondo del botón dentro del kiosko (ej. foto del producto), con el título superpuesto.">
+            <GalleryPicker label="Elegir imagen" />
           </Form.Item>
 
           {/* Solo para simple */}
