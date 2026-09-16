@@ -14,6 +14,25 @@ import { GalleryPicker } from '../components/common/GalleryPicker'
 
 const { Title, Text } = Typography
 
+// Valores = CSS background-size / background-position directo (ver
+// backend/app/models/boton.py) — sin capa de traducción intermedia.
+const AJUSTE_OPTIONS = [
+  { value: 'cover',      label: 'Cubrir todo el botón (puede recortar los bordes)' },
+  { value: 'contain',    label: 'Mantener la imagen completa (puede dejar franjas)' },
+  { value: '100% 100%',  label: 'Estirar para llenar (puede deformar la imagen)' },
+]
+const POSICION_OPTIONS = [
+  { value: 'center',       label: 'Centro' },
+  { value: 'top',          label: 'Arriba' },
+  { value: 'bottom',       label: 'Abajo' },
+  { value: 'left',         label: 'Izquierda' },
+  { value: 'right',        label: 'Derecha' },
+  { value: 'top left',     label: 'Arriba - izquierda' },
+  { value: 'top right',    label: 'Arriba - derecha' },
+  { value: 'bottom left',  label: 'Abajo - izquierda' },
+  { value: 'bottom right', label: 'Abajo - derecha' },
+]
+
 export default function BotonerasPage() {
   const [botoneras, setBotoneras]           = useState([])
   const [loading, setLoading]               = useState(false)
@@ -424,6 +443,20 @@ export default function BotonerasPage() {
 
           <Form.Item name="icono_url" label="Imagen de fondo" help="Se usa como fondo del botón dentro del kiosko (ej. foto del producto), con el título superpuesto.">
             <GalleryPicker label="Elegir imagen" />
+          </Form.Item>
+
+          {/* Solo tienen sentido si hay una imagen elegida */}
+          <Form.Item noStyle shouldUpdate={(prev, cur) => prev.icono_url !== cur.icono_url}>
+            {() => formBoton.getFieldValue('icono_url') ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <Form.Item name="imagen_ajuste" label="Ajuste de la imagen" initialValue="cover">
+                  <Select options={AJUSTE_OPTIONS} />
+                </Form.Item>
+                <Form.Item name="imagen_posicion" label="Posición" initialValue="center">
+                  <Select options={POSICION_OPTIONS} />
+                </Form.Item>
+              </div>
+            ) : null}
           </Form.Item>
 
           {/* Solo para simple */}

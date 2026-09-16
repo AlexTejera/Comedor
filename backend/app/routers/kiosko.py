@@ -93,6 +93,8 @@ def _serializar_botonera(botonera: Botonera) -> dict:
                 "row_span":        b.row_span or 1,
                 "tipo":            b.tipo or "simple",
                 "icono_url":       f"/uploads/{b.icono_url}" if b.icono_url else None,
+                "imagen_ajuste":   b.imagen_ajuste or "cover",
+                "imagen_posicion": b.imagen_posicion or "center",
                 "opciones": [
                     _serializar_opcion(op)
                     for op in sorted(b.opciones, key=lambda o: o.orden)

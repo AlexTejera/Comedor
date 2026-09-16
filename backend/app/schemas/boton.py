@@ -16,7 +16,9 @@ class BotonCreate(BaseModel):
     col_span: int = 1               # ancho en columnas
     row_span: int = 1               # alto en filas
     tipo: str = "simple"            # "simple" | "combo"
-    icono_url: Optional[str] = None  # nombre de archivo en la galería
+    icono_url: Optional[str] = None      # nombre de archivo en la galería
+    imagen_ajuste: str = "cover"          # CSS background-size: cover | contain | "100% 100%"
+    imagen_posicion: str = "center"       # CSS background-position: center | top | bottom | left | right | "top left" | ...
 
 
 class BotonUpdate(BaseModel):
@@ -32,6 +34,8 @@ class BotonUpdate(BaseModel):
     row_span: Optional[int] = None
     tipo: Optional[str] = None
     icono_url: Optional[str] = None
+    imagen_ajuste: Optional[str] = None
+    imagen_posicion: Optional[str] = None
 
 
 class BotonOut(BaseModel):
@@ -49,6 +53,8 @@ class BotonOut(BaseModel):
     row_span: int = 1
     tipo: str = "simple"
     icono_url: Optional[str] = None
+    imagen_ajuste: str = "cover"
+    imagen_posicion: str = "center"
     opciones: list[BotonOpcionOut] = []
 
     model_config = {"from_attributes": True}

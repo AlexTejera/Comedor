@@ -29,6 +29,14 @@ class Boton(Base):
     tipo: Mapped[str] = mapped_column(String(10), default="simple")
     # Nombre de archivo en la galería (backend/data/uploads/) — None = sin ícono
     icono_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    # Cómo se ajusta la imagen de fondo dentro del botón. Valores = CSS
+    # background-size directo: "cover" (llena todo, puede recortar) |
+    # "contain" (se ve completa, puede dejar franjas) | "100% 100%" (estira,
+    # deforma la proporción). Solo tiene efecto si icono_url está definido.
+    imagen_ajuste: Mapped[str] = mapped_column(String(20), default="cover")
+    # Posición de la imagen de fondo. Valores = CSS background-position
+    # directo: "center", "top", "bottom", "left", "right", "top left", etc.
+    imagen_posicion: Mapped[str] = mapped_column(String(20), default="center")
 
     botonera: Mapped["Botonera"] = relationship("Botonera", back_populates="botones")
     opciones: Mapped[list["BotonOpcion"]] = relationship(

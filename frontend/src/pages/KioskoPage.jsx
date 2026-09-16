@@ -344,8 +344,9 @@ function SelectionView({ empleado, botonera, seleccion, totalItems, onCambiar, o
             ? {
                 backgroundColor: b.color,
                 backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${b.icono_url})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
+                backgroundSize: b.imagen_ajuste || 'cover',
+                backgroundPosition: b.imagen_posicion || 'center',
+                backgroundRepeat: 'no-repeat',
               }
             : { background: b.color }
           const gridStyle = {}
