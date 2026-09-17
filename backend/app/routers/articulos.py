@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.schemas.articulo import ArticuloCreate, ArticuloUpdate, ArticuloOut
+from app.schemas.articulo import ArticuloCreate, ArticuloUpdate, ArticuloOut, LimiteConsumoIn, LimiteConsumoOut
 from app.services import summa_service
 from app.services.summa_service import SummaConnectionError
 from app.utils.security import require_admin
@@ -80,6 +80,41 @@ def update_articulo(codigo: str, data: ArticuloUpdate, db: Session = Depends(get
 def delete_articulo(codigo: str, db: Session = Depends(get_db), _=Depends(require_admin)):
     """Elimina un artículo. Bloqueado si tiene consumos registrados en el historial."""
     resultado = summa_service.eliminar_articulo(codigo, db)
+    if resultado.get("Estado") != "OK":
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=resultado.get("Mensaje"))
+    return resultado
+
+
+# ── Límites de consumo (dbo.Limite_consumo) ──────────────────────────────────
+#
+# Ver sql/sp_comedor_limite_consumo.sql. Nota: por ahora sp_comedor_registrar_consumo
+# en producción solo hace cumplir la ventana de 12hs (hardcodeada) — cargar acá
+# una ventana distinta la deja visible en el panel pero no la aplica todavía.
+
+@router.get("/{codigo}/limites", response_model=list[LimiteConsumoOut])
+def list_limites_consumo(codigo: str, db: Session = Depends(get_db), _=Depends(require_admin)):
+    """Lista los límites de consumo cargados para un artículo."""
+    try:
+        return summa_service.listar_limites_consumo(codigo, db)
+    except SummaConnectionError as e:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(e))
+
+
+@router.post("/{codigo}/limites")
+def save_limite_consumo(codigo: str, data: LimiteConsumoIn, db: Session = Depends(get_db), _=Depends(require_admin)):
+    """Crea o actualiza (según la ventana de horas) un límite de consumo del artículo."""
+    resultado = summa_service.guardar_limite_consumo(codigo, data.maxConsumo, data.enUltimasXHs, db)
+    if resultado.get("Estado") != "OK":
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=resultado.get("Mensaje"))
+    return resultado
+
+
+@router.delete("/{codigo}/limites/{en_ultimas_x_hs}")
+def delete_limite_consumo(
+    codigo: str, en_ultimas_x_hs: int, db: Session = Depends(get_db), _=Depends(require_admin)
+):
+    """Elimina el límite de consumo de un artículo para esa ventana de horas."""
+    resultado = summa_service.eliminar_limite_consumo(codigo, en_ultimas_x_hs, db)
     if resultado.get("Estado") != "OK":
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=resultado.get("Mensaje"))
     return resultado

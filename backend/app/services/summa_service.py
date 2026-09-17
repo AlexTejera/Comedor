@@ -292,6 +292,33 @@ def eliminar_articulo(codigo: str, db: Session) -> dict:
     return _exec_status_sp("sp_comedor_articulos_eliminar", db, codigo=codigo)
 
 
+# ── Límites de consumo (dbo.Limite_consumo) ─────────────────────────────────
+#
+# Tabla ya existente en SUMMA: por artículo, cuántas unidades máximo
+# (max_consumo) se pueden consumir en una ventana de horas (en_ultimas_x_hs).
+# Clave natural (codigo, en_ultimas_x_hs) — ver sql/sp_comedor_limite_consumo.sql.
+
+def listar_limites_consumo(codigo: str, db: Session) -> list:
+    """Llama a dbo.sp_comedor_limite_consumo_listar. Puede lanzar SummaConnectionError."""
+    return _exec_list_sp("sp_comedor_limite_consumo_listar", db, codigo=codigo)
+
+
+def guardar_limite_consumo(codigo: str, max_consumo: int, en_ultimas_x_hs: int, db: Session) -> dict:
+    """Llama a dbo.sp_comedor_limite_consumo_guardar (crea o actualiza según la ventana de horas)."""
+    return _exec_status_sp(
+        "sp_comedor_limite_consumo_guardar", db,
+        codigo=codigo, max_consumo=max_consumo, en_ultimas_x_hs=en_ultimas_x_hs,
+    )
+
+
+def eliminar_limite_consumo(codigo: str, en_ultimas_x_hs: int, db: Session) -> dict:
+    """Llama a dbo.sp_comedor_limite_consumo_eliminar."""
+    return _exec_status_sp(
+        "sp_comedor_limite_consumo_eliminar", db,
+        codigo=codigo, en_ultimas_x_hs=en_ultimas_x_hs,
+    )
+
+
 # ── Categorías y subcategorías ──────────────────────────────────────────────
 
 def listar_categorias(db: Session) -> list:

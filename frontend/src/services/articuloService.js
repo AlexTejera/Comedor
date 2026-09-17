@@ -17,4 +17,15 @@ export const articuloService = {
   delete: async (codigo) => {
     await api.delete(`/articulos/${encodeURIComponent(codigo)}`)
   },
+  getLimites: async (codigo) => {
+    const { data } = await api.get(`/articulos/${encodeURIComponent(codigo)}/limites`)
+    return data
+  },
+  guardarLimite: async (codigo, limite) => {
+    const { data } = await api.post(`/articulos/${encodeURIComponent(codigo)}/limites`, limite)
+    return data
+  },
+  eliminarLimite: async (codigo, enUltimasXHs) => {
+    await api.delete(`/articulos/${encodeURIComponent(codigo)}/limites/${enUltimasXHs}`)
+  },
 }

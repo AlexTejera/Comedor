@@ -33,3 +33,13 @@ class ArticuloOut(BaseModel):
     subCategoria: str
     precio: float
     habilitado: bool = True
+
+
+class LimiteConsumoIn(BaseModel):
+    maxConsumo: int
+    enUltimasXHs: int
+
+
+class LimiteConsumoOut(BaseModel):
+    maxConsumo: int
+    enUltimasXHs: int

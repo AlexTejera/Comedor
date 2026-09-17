@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react'
 import {
   Table, Button, Modal, Form, Input, InputNumber, Select, Switch,
-  Space, Typography, Popconfirm, message, Alert, Tag,
+  Space, Typography, Popconfirm, message, Alert, Tag, Divider,
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { articuloService } from '../services/articuloService'
@@ -24,6 +24,12 @@ export default function ArticulosPage() {
   const [editTarget, setEditTarget] = useState(null)
   const [selectedCategoria, setSelectedCategoria] = useState(null)  // filtra el Select de subcategoría
   const [form] = Form.useForm()
+
+  // Límites de consumo (dbo.Limite_consumo) del artículo que se está editando.
+  const [limites, setLimites] = useState([])
+  const [limitesLoading, setLimitesLoading] = useState(false)
+  const [nuevoMaxConsumo, setNuevoMaxConsumo] = useState(null)
+  const [nuevoEnUltimasXHs, setNuevoEnUltimasXHs] = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -46,15 +52,59 @@ export default function ArticulosPage() {
   const openModal = (articulo = null) => {
     setEditTarget(articulo)
     form.resetFields()
+    setLimites([])
+    setNuevoMaxConsumo(null)
+    setNuevoEnUltimasXHs(null)
     if (articulo) {
       // El backend devuelve "subCategoria" (camelCase) en el listado, pero
       // el form/la API de creación/edición usan "sub_categoria" — se mapea acá.
       form.setFieldsValue({ ...articulo, sub_categoria: articulo.subCategoria })
       setSelectedCategoria(articulo.categoria)
+      cargarLimites(articulo.codigo)
     } else {
       setSelectedCategoria(null)
     }
     setModalOpen(true)
+  }
+
+  const cargarLimites = async (codigo) => {
+    setLimitesLoading(true)
+    try {
+      setLimites(await articuloService.getLimites(codigo))
+    } catch (e) {
+      message.error(e.response?.data?.detail || 'Error al cargar los límites de consumo.')
+    } finally {
+      setLimitesLoading(false)
+    }
+  }
+
+  const handleAgregarLimite = async () => {
+    if (!nuevoMaxConsumo || !nuevoEnUltimasXHs) {
+      message.warning('Completá máximo y ventana de horas.')
+      return
+    }
+    try {
+      await articuloService.guardarLimite(editTarget.codigo, {
+        maxConsumo: nuevoMaxConsumo,
+        enUltimasXHs: nuevoEnUltimasXHs,
+      })
+      message.success('Límite guardado.')
+      setNuevoMaxConsumo(null)
+      setNuevoEnUltimasXHs(null)
+      cargarLimites(editTarget.codigo)
+    } catch (e) {
+      message.error(e.response?.data?.detail || 'Error al guardar el límite.')
+    }
+  }
+
+  const handleEliminarLimite = async (enUltimasXHs) => {
+    try {
+      await articuloService.eliminarLimite(editTarget.codigo, enUltimasXHs)
+      message.success('Límite eliminado.')
+      cargarLimites(editTarget.codigo)
+    } catch (e) {
+      message.error(e.response?.data?.detail || 'Error al eliminar el límite.')
+    }
   }
 
   const handleSave = async () => {
@@ -190,6 +240,73 @@ export default function ArticulosPage() {
             <Switch checkedChildren="Sí" unCheckedChildren="No" />
           </Form.Item>
         </Form>
+
+        {editTarget && (
+          <>
+            <Divider style={{ margin: '8px 0 16px' }} />
+            <Typography.Text strong>Límites de consumo</Typography.Text>
+            <Typography.Paragraph type="secondary" style={{ marginTop: 4, marginBottom: 12, fontSize: 13 }}>
+              Máxima cantidad permitida de este artículo en una ventana de horas.
+              Actualmente en producción solo se hace cumplir la ventana de 12hs.
+            </Typography.Paragraph>
+
+            <Table
+              size="small"
+              rowKey="enUltimasXHs"
+              loading={limitesLoading}
+              dataSource={limites}
+              pagination={false}
+              locale={{ emptyText: 'Sin límites cargados para este artículo.' }}
+              columns={[
+                { title: 'Máximo', dataIndex: 'maxConsumo', key: 'maxConsumo' },
+                {
+                  title: 'En las últimas',
+                  dataIndex: 'enUltimasXHs',
+                  key: 'enUltimasXHs',
+                  render: (v) => `${v} hs`,
+                },
+                {
+                  title: '',
+                  key: 'acc',
+                  width: 50,
+                  render: (_, r) => (
+                    <Popconfirm
+                      title="¿Eliminar este límite?"
+                      onConfirm={() => handleEliminarLimite(r.enUltimasXHs)}
+                      okText="Eliminar"
+                      okButtonProps={{ danger: true }}
+                      cancelText="Cancelar"
+                    >
+                      <Button size="small" danger icon={<DeleteOutlined />} />
+                    </Popconfirm>
+                  ),
+                },
+              ]}
+              style={{ marginBottom: 12 }}
+            />
+
+            <Space>
+              <InputNumber
+                min={1}
+                placeholder="Máximo"
+                value={nuevoMaxConsumo}
+                onChange={setNuevoMaxConsumo}
+                style={{ width: 110 }}
+              />
+              <InputNumber
+                min={1}
+                placeholder="Horas"
+                value={nuevoEnUltimasXHs}
+                onChange={setNuevoEnUltimasXHs}
+                addonAfter="hs"
+                style={{ width: 130 }}
+              />
+              <Button icon={<PlusOutlined />} onClick={handleAgregarLimite}>
+                Agregar
+              </Button>
+            </Space>
+          </>
+        )}
       </Modal>
     </div>
   )
