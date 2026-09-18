@@ -11,16 +11,18 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
 from app.database import get_db
 
+from app.config import settings as app_settings
 from app.database import engine, Base, SessionLocal
+from app.middleware.prefijo_waf import PrefijoWafMiddleware
 from app.routers import auth, users, botoneras, kiosko, logs, settings, backup
 from app.routers import soap_estado, articulos, categorias, gallery
 
@@ -58,6 +60,10 @@ app = FastAPI(
     redoc_url="/api/redoc",
     lifespan=lifespan,
 )
+
+# Soporte para acceso vía WAF con prefijo de ruta (ej. /comedor) sin romper
+# el acceso interno directo — ver app/middleware/prefijo_waf.py.
+app.add_middleware(PrefijoWafMiddleware, prefix=app_settings.waf_path_prefix)
 
 # CORS: solo necesario en desarrollo local (Vite corre en :5173)
 app.add_middleware(
@@ -135,11 +141,31 @@ def health(db: Session = Depends(get_db)):
 # Las rutas /api/* ya están registradas arriba y tienen prioridad absoluta.
 frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
 if frontend_dist.exists():
+    _index_html_original = (frontend_dist / "index.html").read_text(encoding="utf-8")
+
+    def _index_html_para(root_path: str) -> str:
+        """
+        index.html referencia sus assets con rutas absolutas desde raíz
+        (src="/assets/...", href="/favicon.svg") — a propósito, ver el
+        comentario en vite.config.js sobre por qué NO son relativas. Si la
+        request vino con el prefijo del WAF (root_path seteado por
+        PrefijoWafMiddleware), hay que anteponérselo acá para que el
+        navegador pida "/comedor/assets/..." y no "/assets/...".
+        """
+        if not root_path:
+            return _index_html_original
+        return (
+            _index_html_original
+            .replace('src="/assets/', f'src="{root_path}/assets/')
+            .replace('href="/assets/', f'href="{root_path}/assets/')
+            .replace('href="/favicon.svg"', f'href="{root_path}/favicon.svg"')
+        )
+
     @app.get("/{full_path:path}", include_in_schema=False)
-    async def serve_spa(full_path: str):
+    async def serve_spa(full_path: str, request: Request):
         file_path = frontend_dist / full_path
         if file_path.is_file():
             return FileResponse(file_path)
-        return FileResponse(frontend_dist / "index.html")
+        return HTMLResponse(_index_html_para(request.scope.get("root_path", "")))
 
     logger.info("Frontend servido desde %s", frontend_dist)

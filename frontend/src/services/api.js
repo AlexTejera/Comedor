@@ -1,7 +1,8 @@
 import axios from 'axios'
+import { conPrefijo } from '../utils/wafPrefix'
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: conPrefijo('/api'),
   timeout: 15000,
 })
 
@@ -21,7 +22,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
-      window.location.href = '/admin/login'
+      window.location.href = conPrefijo('/admin/login')
     }
     return Promise.reject(error)
   }

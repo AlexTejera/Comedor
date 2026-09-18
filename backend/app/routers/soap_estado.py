@@ -119,6 +119,9 @@ def _soap_fault(mensaje: str) -> str:
 def get_wsdl(request: Request, wsdl: str = None):
     """Sirve el WSDL cuando se accede con ?wsdl"""
     if wsdl is not None:
+        # request.base_url de Starlette ya incorpora scope["root_path"] solo
+        # (lo setea PrefijoWafMiddleware cuando la request llegó con el
+        # prefijo del WAF, ej. "/comedor") — no hace falta sumarlo de nuevo acá.
         endpoint_url = str(request.base_url).rstrip("/") + "/soap/estado"
         wsdl_content = WSDL.replace("__ENDPOINT__", endpoint_url)
         return Response(content=wsdl_content, media_type="text/xml; charset=utf-8")

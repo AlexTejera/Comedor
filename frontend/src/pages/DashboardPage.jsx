@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons'
 import { logService } from '../services/logService'
 import { botoneraService } from '../services/botoneraService'
+import { conPrefijo } from '../utils/wafPrefix'
 import dayjs from 'dayjs'
 
 const { Title, Text } = Typography
@@ -111,9 +112,9 @@ export default function DashboardPage() {
         <Col xs={24} md={12}>
           <Card title="Acceso rápido">
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Button icon={<LinkOutlined />} href="/" target="_blank">Abrir Kiosko</Button>
-              <Button href="/admin/botoneras">Gestionar Botoneras</Button>
-              <Button href="/admin/logs">Ver Historial</Button>
+              <Button icon={<LinkOutlined />} href={conPrefijo('/')} target="_blank">Abrir Kiosko</Button>
+              <Button href={conPrefijo('/admin/botoneras')}>Gestionar Botoneras</Button>
+              <Button href={conPrefijo('/admin/logs')}>Ver Historial</Button>
             </div>
           </Card>
         </Col>

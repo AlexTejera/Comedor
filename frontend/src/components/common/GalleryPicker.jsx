@@ -17,6 +17,7 @@ import { useState, useEffect } from 'react'
 import { Modal, Button, Upload, Empty, Spin, message, Tooltip, Typography } from 'antd'
 import { PictureOutlined, UploadOutlined, CloseCircleFilled } from '@ant-design/icons'
 import { galleryService } from '../../services/galleryService'
+import { conPrefijo } from '../../utils/wafPrefix'
 
 const { Text } = Typography
 
@@ -61,7 +62,7 @@ export function GalleryPicker({ value, onChange, label = 'Elegir imagen' }) {
       {value ? (
         <div style={{ position: 'relative', width: 56, height: 56 }}>
           <img
-            src={`/uploads/${value}`}
+            src={conPrefijo(`/uploads/${value}`)}
             alt=""
             style={{ width: 56, height: 56, objectFit: 'contain', borderRadius: 8, border: '1px solid #d9d9d9', background: '#fafafa' }}
           />

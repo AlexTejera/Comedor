@@ -222,6 +222,36 @@ Montado en `main.py`: `app.include_router(soap_estado.router, prefix="/soap", ta
 
 ---
 
+## Soporte para WAF/DMZ con prefijo de ruta
+
+Aluminios está armando una DMZ con WAF para exponer el sitio hacia afuera
+como `https://aluminios.com.uy/comedor` (mapeado a este container). El WAF
+**preserva el prefijo** al reenviar la request (no lo recorta) — le llega
+al backend `/comedor/api/...` tal cual.
+
+El acceso interno directo (`http://10.25.1.165:11546/...`, sin prefijo)
+sigue funcionando exactamente igual, sin cambios — la misma corrida del
+container soporta ambos modos a la vez.
+
+**Piezas:**
+- `WAF_PATH_PREFIX` en `.env` (default `/comedor`) — vacío desactiva el soporte.
+- `backend/app/middleware/prefijo_waf.py`: si la request trae el prefijo, lo
+  saca antes de que el router la matchee y setea `scope["root_path"]` (así
+  `request.base_url` de Starlette ya lo incorpora solo — no sumarlo dos
+  veces, ver el comentario en `soap_estado.py`).
+- `serve_spa()` en `main.py`: reescribe al vuelo las rutas `/assets/...` y
+  `/favicon.svg` de `index.html` con el prefijo, cuando corresponde.
+  **A propósito NO se usa Vite `base` relativa** (`./`) para esto — con un
+  SPA de rutas anidadas (`/admin/botoneras`) un link profundo cargado
+  directo resolvería mal las rutas relativas (ver el comentario en
+  `vite.config.js`).
+- `frontend/src/utils/wafPrefix.js`: contraparte del lado del navegador —
+  el WAF no reescribe lo que ve el cliente, así que el frontend detecta el
+  prefijo mirando `window.location.pathname` y lo usa para el `basename`
+  del router, el `baseURL` de axios, y las imágenes servidas desde `/uploads`.
+
+---
+
 ## Flujo del kiosko
 
 ```
@@ -368,6 +398,8 @@ curl http://localhost:11546/api/health
 - Health check REST (`/api/health`)
 - Servicio SOAP watchdog (`/soap/estado`) — ConsultarEstado → `<estado>ok</estado>`
 - Setting `mostrar_numpad` (toggle visible desde panel admin)
+- Gestión de límites de consumo por artículo (`Limite_consumo`) desde el panel
+- Soporte para WAF/DMZ con prefijo de ruta (`/comedor`), conviviendo con el acceso interno directo
 
 ### ⏳ Pendiente
 - Deploy en servidor Ubuntu de producción

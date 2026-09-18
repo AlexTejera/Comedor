@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
 import { Button, Upload, Empty, Spin, message, Popconfirm, Typography, Card, Tag } from 'antd'
 import { UploadOutlined, DeleteOutlined } from '@ant-design/icons'
 import { galleryService } from '../services/galleryService'
+import { conPrefijo } from '../utils/wafPrefix'
 
 const { Title, Text } = Typography
 
@@ -78,7 +79,7 @@ export default function GaleriaPage() {
               key={img.id}
               size="small"
               cover={<div style={{ height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa', padding: 8 }}>
-                <img src={img.url} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                <img src={conPrefijo(img.url)} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
               </div>}
               actions={[
                 <Popconfirm

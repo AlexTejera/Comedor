@@ -20,6 +20,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Spin } from 'antd'
 import { kioskService } from '../services/kioskService'
+import { conPrefijo } from '../utils/wafPrefix'
 import dayjs from 'dayjs'
 
 const INACTIVITY_TIMEOUT = 60_000
@@ -204,7 +205,7 @@ export default function KioskoPage() {
     <div className="kiosko-root" onClick={resetInactivity} onKeyDown={resetInactivity}>
       <header className="kiosko-header">
         {logoUrl ? (
-          <img className="kiosko-logo-img" src={logoUrl} alt="Logo de la empresa" />
+          <img className="kiosko-logo-img" src={conPrefijo(logoUrl)} alt="Logo de la empresa" />
         ) : (
           <span className="kiosko-logo">🍽️ Comedor — Aluminios del Uruguay</span>
         )}
@@ -361,7 +362,7 @@ function SelectionView({ empleado, botonera, seleccion, totalItems, onCambiar, o
           const fondoStyle = b.icono_url
             ? {
                 backgroundColor: b.color,
-                backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${b.icono_url})`,
+                backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${conPrefijo(b.icono_url)})`,
                 backgroundSize: b.imagen_ajuste || 'cover',
                 backgroundPosition: b.imagen_posicion || 'center',
                 backgroundRepeat: 'no-repeat',
@@ -463,7 +464,7 @@ function ComboOverlay({ boton, seleccion, onElegir, onCantidad, onCerrar }) {
                   <div key={op.id} className={`combo-panel-opcion ${elegida ? 'elegida' : ''}`}>
                     <button className="combo-panel-opcion-btn" onClick={() => onElegir(op)}>
                       <span className="combo-radio-icon">{elegida ? '●' : '○'}</span>
-                      {op.icono_url && <img className="combo-opcion-icono" src={op.icono_url} alt="" />}
+                      {op.icono_url && <img className="combo-opcion-icono" src={conPrefijo(op.icono_url)} alt="" />}
                       <span className="combo-opcion-nombre">{op.nombre}</span>
                       {op.max_unidades > 1 && (
                         <span className="combo-opcion-max">máx {op.max_unidades}</span>
