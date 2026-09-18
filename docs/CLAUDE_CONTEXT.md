@@ -224,21 +224,29 @@ Montado en `main.py`: `app.include_router(soap_estado.router, prefix="/soap", ta
 
 ## Soporte para WAF/DMZ con prefijo de ruta
 
-Aluminios está armando una DMZ con WAF para exponer el sitio hacia afuera
-como `https://aluminios.com.uy/comedor` (mapeado a este container). El WAF
-**preserva el prefijo** al reenviar la request (no lo recorta) — le llega
-al backend `/comedor/api/...` tal cual.
+Aluminios armó una DMZ con WAF (Nginx Proxy Manager + Authelia delante)
+para exponer el sitio hacia afuera como `https://aluruguay.com.uy/comedor`
+(mapeado a este container, puerto 11546).
 
-El acceso interno directo (`http://10.25.1.165:11546/...`, sin prefijo)
-sigue funcionando exactamente igual, sin cambios — la misma corrida del
+**CONFIRMADO contra la config real (2026-09-18)**: el WAF **recorta el
+prefijo** antes de reenviar acá — la location tiene
+`rewrite ^/comedor/?(.*)$ /$1 break;`. La ruta que le llega al backend ya
+viene limpia, sea acceso interno directo o externo por WAF — no hay forma
+de diferenciarlos mirando la ruta sola.
+
+El acceso interno directo (`http://10.25.1.165:11546/...`) sigue
+funcionando exactamente igual, sin cambios — la misma corrida del
 container soporta ambos modos a la vez.
 
 **Piezas:**
-- `WAF_PATH_PREFIX` en `.env` (default `/comedor`) — vacío desactiva el soporte.
-- `backend/app/middleware/prefijo_waf.py`: si la request trae el prefijo, lo
-  saca antes de que el router la matchee y setea `scope["root_path"]` (así
-  `request.base_url` de Starlette ya lo incorpora solo — no sumarlo dos
-  veces, ver el comentario en `soap_estado.py`).
+- El WAF tiene que mandar el header `X-Forwarded-Prefix: /comedor` en esa
+  location (agregado como `proxy_set_header X-Forwarded-Prefix /comedor;`
+  en el mismo snippet nginx que ya tiene el `rewrite` y el `auth_request`
+  de Authelia). Sin este header, todo funciona como si no hubiera WAF.
+- `backend/app/middleware/prefijo_waf.py`: lee ese header y setea
+  `scope["root_path"]` (así `request.base_url` de Starlette ya lo
+  incorpora solo — no sumarlo dos veces, ver el comentario en
+  `soap_estado.py`).
 - `serve_spa()` en `main.py`: reescribe al vuelo las rutas `/assets/...` y
   `/favicon.svg` de `index.html` con el prefijo, cuando corresponde.
   **A propósito NO se usa Vite `base` relativa** (`./`) para esto — con un
@@ -249,6 +257,13 @@ container soporta ambos modos a la vez.
   el WAF no reescribe lo que ve el cliente, así que el frontend detecta el
   prefijo mirando `window.location.pathname` y lo usa para el `basename`
   del router, el `baseURL` de axios, y las imágenes servidas desde `/uploads`.
+
+**Nota de seguridad**: el middleware confía en el header tal cual venga,
+sin verificar que la request realmente haya pasado por el WAF. No es una
+superficie de control de acceso (en el peor caso, alguien se rompe su
+propia página armando mal el header a mano), así que no se agregó una
+lista de proxies confiables — mismo criterio que `redUsuario.ts` en
+PortalApp-Aluminios.
 
 ---
 

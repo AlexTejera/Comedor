@@ -20,7 +20,6 @@ from sqlalchemy import text
 
 from app.database import get_db
 
-from app.config import settings as app_settings
 from app.database import engine, Base, SessionLocal
 from app.middleware.prefijo_waf import PrefijoWafMiddleware
 from app.routers import auth, users, botoneras, kiosko, logs, settings, backup
@@ -63,7 +62,7 @@ app = FastAPI(
 
 # Soporte para acceso vía WAF con prefijo de ruta (ej. /comedor) sin romper
 # el acceso interno directo — ver app/middleware/prefijo_waf.py.
-app.add_middleware(PrefijoWafMiddleware, prefix=app_settings.waf_path_prefix)
+app.add_middleware(PrefijoWafMiddleware)
 
 # CORS: solo necesario en desarrollo local (Vite corre en :5173)
 app.add_middleware(

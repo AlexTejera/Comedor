@@ -1,47 +1,51 @@
 """
 prefijo_waf.py
-Middleware ASGI puro (corre antes que el router) para que el sitio funcione
-tanto accedido directo (sin prefijo, como hoy: http://10.25.1.165:11546/...)
-como a través del WAF/reverse proxy de la DMZ, que preserva el prefijo al
-reenviar la request (ej. https://aluminios.com.uy/comedor/api/... le llega
-al backend tal cual, con el "/comedor" incluido).
+Middleware ASGI puro (corre antes que el router) para que el sitio arme
+bien sus propias URLs (el WSDL del watchdog SOAP, las rutas de assets de
+index.html) tanto en acceso interno directo como a través del WAF de la
+DMZ (Nginx Proxy Manager).
 
-Si la ruta entrante empieza con el prefijo configurado, se lo saca antes de
-que el router intente matchear (si no, "/comedor/api/auth/login" no
-coincide con ninguna ruta registrada como "/api/auth/login" y da 404) y se
-guarda en scope["root_path"] para que el código que arma URLs propias
-absolutas (ej. el WSDL del watchdog SOAP, ver routers/soap_estado.py) sepa
-que tiene que incluirlo de vuelta.
+CONFIRMADO contra la config real (2026-09-18): el WAF recorta el prefijo
+antes de reenviar acá — la location de /comedor tiene
+"rewrite ^/comedor/?(.*)$ /$1 break;" — así que la ruta que le llega a este
+proceso YA VIENE SIN el prefijo, sea acceso interno o externo por WAF.
+Como no hay nada distinto en la ruta entrante para diferenciar un modo del
+otro, el WAF tiene que avisar con un header — leemos X-Forwarded-Prefix.
 
-Si la ruta NO trae el prefijo (acceso interno directo), no se toca nada —
-el comportamiento actual queda exactamente igual.
+Agregar en el snippet nginx de la location /comedor (mismo lugar que ya
+tiene el rewrite y el auth_request de Authelia):
+
+    proxy_set_header X-Forwarded-Prefix /comedor;
+
+Sin ese header (acceso interno directo, o si todavía no se agregó en el
+WAF) no se toca nada — mismo comportamiento que sin este middleware.
+
+Nota de seguridad: se confía en el header tal cual venga, sin validar que
+la request pase realmente por el WAF. El peor caso de que alguien lo
+falsifique a mano es que su propia página le cargue mal un par de rutas de
+assets — no es una superficie de control de acceso, así que no vale la
+pena una lista de proxies confiables para esto (mismo criterio que
+frontend/src/lib/redUsuario.ts en PortalApp-Aluminios).
 
 Ver también frontend/src/utils/wafPrefix.js, la contraparte del lado del
 navegador (el WAF no reescribe lo que ve el cliente, así que el frontend
 necesita su propia detección para armar sus URLs).
 """
 
+HEADER_PREFIJO = b"x-forwarded-prefix"
+
 
 class PrefijoWafMiddleware:
-    def __init__(self, app, prefix: str):
+    def __init__(self, app):
         self.app = app
-        self.prefix = prefix.rstrip("/") if prefix else ""
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] != "http" or not self.prefix:
-            await self.app(scope, receive, send)
-            return
-
-        path = scope["path"]
-        if path == self.prefix or path.startswith(self.prefix + "/"):
-            scope["path"] = path[len(self.prefix):] or "/"
-
-            raw_path = scope.get("raw_path")
-            if raw_path:
-                prefix_bytes = self.prefix.encode("utf-8")
-                if raw_path.startswith(prefix_bytes):
-                    scope["raw_path"] = raw_path[len(prefix_bytes):] or b"/"
-
-            scope["root_path"] = scope.get("root_path", "") + self.prefix
+        if scope["type"] == "http":
+            for nombre, valor in scope.get("headers", []):
+                if nombre.lower() == HEADER_PREFIJO:
+                    prefijo = valor.decode("latin-1").rstrip("/")
+                    if prefijo:
+                        scope["root_path"] = scope.get("root_path", "") + prefijo
+                    break
 
         await self.app(scope, receive, send)
