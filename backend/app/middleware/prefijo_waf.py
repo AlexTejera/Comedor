@@ -30,6 +30,18 @@ frontend/src/lib/redUsuario.ts en PortalApp-Aluminios).
 Ver también frontend/src/utils/wafPrefix.js, la contraparte del lado del
 navegador (el WAF no reescribe lo que ve el cliente, así que el frontend
 necesita su propia detección para armar sus URLs).
+
+OJO — por qué esto NO usa scope["root_path"]: root_path es el campo
+estándar de ASGI, y Starlette asume que scope["path"] YA lo trae como
+prefijo (para poder recortarlo de forma consistente en cada Mount
+anidado, ver starlette._utils.get_route_path). Acá no es así: nginx ya
+sacó el prefijo antes de reenviar, así que scope["path"] llega limpio.
+Setear root_path de todos modos rompe cualquier app.mount() (ej. el de
+StaticFiles para /uploads) — Starlette intenta recortar el prefijo de
+un path que nunca lo tuvo y termina buscando el archivo en una ruta
+duplicada ("uploads/uploads/..."), 404 total. Por eso el prefijo detectado
+se guarda en scope["state"], una clave propia que no interfiere con nada
+del ruteo interno — soap_estado.py y main.py lo leen de ahí.
 """
 
 HEADER_PREFIJO = b"x-forwarded-prefix"
@@ -45,7 +57,7 @@ class PrefijoWafMiddleware:
                 if nombre.lower() == HEADER_PREFIJO:
                     prefijo = valor.decode("latin-1").rstrip("/")
                     if prefijo:
-                        scope["root_path"] = scope.get("root_path", "") + prefijo
+                        scope.setdefault("state", {})["waf_prefix"] = prefijo
                     break
 
         await self.app(scope, receive, send)

@@ -165,6 +165,9 @@ if frontend_dist.exists():
         file_path = frontend_dist / full_path
         if file_path.is_file():
             return FileResponse(file_path)
-        return HTMLResponse(_index_html_para(request.scope.get("root_path", "")))
+        # Prefijo del WAF (ej. "/comedor"), si vino — ver PrefijoWafMiddleware
+        # sobre por qué se guarda en scope["state"] y no en root_path.
+        prefijo_waf = request.scope.get("state", {}).get("waf_prefix", "")
+        return HTMLResponse(_index_html_para(prefijo_waf))
 
     logger.info("Frontend servido desde %s", frontend_dist)
