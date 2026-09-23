@@ -299,14 +299,19 @@ function LoginView({ numero, setNumero, onConfirm, mostrarNumpad }) {
 
       {mostrarNumpad ? (
         /* Modo numpad: teclado virtual en pantalla */
-        <div className="numpad-grid">
-          {digits.map((d, i) => {
-            if (d === '') return <div key={i} />
-            return <button key={i} className="numpad-btn digit" onClick={() => handleKey(d)}>{d}</button>
-          })}
-          <button className="numpad-btn back" onClick={() => handleKey('back')}>⌫</button>
-          <button className="numpad-btn confirm" onClick={() => handleKey('ok')} disabled={!numero}>Entrar</button>
-        </div>
+        <>
+          <div className="numpad-grid">
+            {digits.map((d, i) => {
+              if (d === '') return <div key={i} />
+              return <button key={i} className="numpad-btn digit" onClick={() => handleKey(d)}>{d}</button>
+            })}
+            <button className="numpad-btn back" onClick={() => handleKey('back')}>⌫</button>
+            <button className="numpad-btn confirm" onClick={() => handleKey('ok')} disabled={!numero}>Entrar</button>
+          </div>
+          <p style={{ color:'rgba(255,255,255,0.5)', fontSize:14, textAlign:'center', margin:0 }}>
+            También podés pasar tu tarjeta para ingresar
+          </p>
+        </>
       ) : (
         /* Modo teclado físico: solo botón Entrar + hint */
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:16, width:'100%', maxWidth:280 }}>
@@ -314,7 +319,7 @@ function LoginView({ numero, setNumero, onConfirm, mostrarNumpad }) {
             Usá el teclado y presioná <kbd style={{
               background:'rgba(255,255,255,0.15)', border:'1px solid rgba(255,255,255,0.3)',
               borderRadius:4, padding:'1px 7px', fontFamily:'monospace', fontSize:13
-            }}>Enter</kbd> para ingresar
+            }}>Enter</kbd>, o pasá tu tarjeta, para ingresar
           </p>
           <button
             className="numpad-btn confirm"
